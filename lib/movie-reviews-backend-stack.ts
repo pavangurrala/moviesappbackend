@@ -6,6 +6,7 @@ import * as custom from "aws-cdk-lib/custom-resources";
 import { generateBatch } from '../shared/util';
 import { movieReviews } from '../seed/moviereviews';
 import { Construct } from 'constructs';
+import * as apig from "aws-cdk-lib/aws-apigateway"
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class MovieReviewsBackendStack extends cdk.Stack {
@@ -19,6 +20,21 @@ export class MovieReviewsBackendStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(10),
       memorySize: 128,
     });
+
+    const api = new apig.RestApi(this, "RestApi", {
+      description : "getMoviewReviews api",
+      deployOptions:{
+        stageName:"dev",
+      },
+      defaultCorsPreflightOptions:{
+        allowHeaders:["Content-Type", "X-Amz-Date"],
+        allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+        allowCredentials: true,
+        allowOrigins: ["*"],
+      }
+    });
+
+    
     
     const simpleFnURL = simpleFn.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
@@ -105,7 +121,27 @@ export class MovieReviewsBackendStack extends cdk.Stack {
       }
     });
     moviereviewstable.grantReadData(getMovieReviewsId)
-    
+
+    const movieReviewsEndPoint = api.root.addResource("moviereviews");
+    movieReviewsEndPoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getAllMovieReviews,{proxy:true})
+    );
+    const movieReviewsByIdEndPoint = movieReviewsEndPoint.addResource("{movieId}");
+    movieReviewsByIdEndPoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getMovieReviewsId, {proxy:true})
+    )
+    const movieReviewsByReviewIdEndPoint = movieReviewsByIdEndPoint.addResource("{reviewId}");
+    movieReviewsByReviewIdEndPoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getMovieReviewsId, {proxy:true})
+    )
+    const movieReviewsByReviewerIdEndPoint = movieReviewsByIdEndPoint.addResource("reviewer").addResource("{reviewerId}");
+    movieReviewsByReviewerIdEndPoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getMovieReviewsId, {proxy:true})
+    )
     new cdk.CfnOutput(this, "Get Movie Reviews by Ids Url", {value: getMoviewReviewsByIdURL.url,});
     new cdk.CfnOutput(this, "Get All Movie Reviews Url", {value: getAllMovieReviewsURL.url,});
     new cdk.CfnOutput(this, "Simple Function Url", {value: simpleFnURL.url});

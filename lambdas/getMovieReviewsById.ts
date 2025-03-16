@@ -1,4 +1,4 @@
-import { Handler } from "aws-lambda";
+import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
@@ -9,11 +9,11 @@ import { QueryString } from "aws-cdk-lib/aws-logs";
 
 const ddbDocClient = createDocumentClient();
 
-export const handler: Handler = async(event, context) =>{
+export const handler: APIGatewayProxyHandlerV2  = async(event, context) =>{
     try{
         console.log("Event: ", JSON.stringify(event));
-        const queryParams = event?.queryStringParameters;
-        const reviewId = queryParams? parseInt(queryParams.reviewId) : undefined;
+        const queryParams = event?.pathParameters;
+        const reviewId = queryParams?.reviewId ? parseInt(queryParams.reviewId) : undefined;
         if(!queryParams){
             return {
                 statusCode: 500,

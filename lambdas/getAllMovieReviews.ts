@@ -1,10 +1,10 @@
-import { Handler } from "aws-lambda";
+import { APIGatewayProxyHandlerV2  } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {DynamoDBDocumentClient, ScanCommand, GetCommand} from "@aws-sdk/lib-dynamodb";
 
 const ddbDocClient = createDDbDocClient();
 
-export const handler: Handler = async(event, context) =>{
+export const handler: APIGatewayProxyHandlerV2  = async(event, context) =>{
     console.log("Event: ", JSON.stringify(event))
     let body;
     let statusCode = 200;
