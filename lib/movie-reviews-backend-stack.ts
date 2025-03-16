@@ -24,7 +24,7 @@ export class MovieReviewsBackendStack extends cdk.Stack {
     const api = new apig.RestApi(this, "RestApi", {
       description : "getMoviewReviews api",
       deployOptions:{
-        stageName:"dev",
+        stageName:"movies",
       },
       defaultCorsPreflightOptions:{
         allowHeaders:["Content-Type", "X-Amz-Date"],
@@ -122,7 +122,30 @@ export class MovieReviewsBackendStack extends cdk.Stack {
     });
     moviereviewstable.grantReadData(getMovieReviewsId)
 
-    const movieReviewsEndPoint = api.root.addResource("moviereviews");
+    const postMoviewReviews = new lambdanode.NodejsFunction(
+      this, 
+      "PostMoviewReviews",
+      {
+        architecture: lambda.Architecture.ARM_64,
+        runtime: lambda.Runtime.NODEJS_22_X,
+        entry: `${__dirname}/../lambdas/postMovieReview.ts`,
+        timeout: cdk.Duration.seconds(10),
+        memorySize: 128,
+        environment: {
+          TABLE_NAME: moviereviewstable.tableName,
+          REGION: 'eu-west-1',
+        },
+      }
+    )
+    const postMoviewReviewsURL = postMoviewReviews.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE ,
+      cors:{
+        allowedOrigins:["*"]
+      }
+    });
+    moviereviewstable.grantReadWriteData(postMoviewReviews)
+
+    const movieReviewsEndPoint = api.root.addResource("reviews");
     movieReviewsEndPoint.addMethod(
       "GET",
       new apig.LambdaIntegration(getAllMovieReviews,{proxy:true})
@@ -142,6 +165,11 @@ export class MovieReviewsBackendStack extends cdk.Stack {
       "GET",
       new apig.LambdaIntegration(getMovieReviewsId, {proxy:true})
     )
+    movieReviewsEndPoint.addMethod(
+      "POST",
+      new apig.LambdaIntegration(postMoviewReviews, {proxy:true})
+    )
+    new cdk.CfnOutput(this, "Post Movie Reviews Url", {value: postMoviewReviewsURL.url,});
     new cdk.CfnOutput(this, "Get Movie Reviews by Ids Url", {value: getMoviewReviewsByIdURL.url,});
     new cdk.CfnOutput(this, "Get All Movie Reviews Url", {value: getAllMovieReviewsURL.url,});
     new cdk.CfnOutput(this, "Simple Function Url", {value: simpleFnURL.url});
