@@ -145,6 +145,51 @@ export class MovieReviewsBackendStack extends cdk.Stack {
     });
     moviereviewstable.grantReadWriteData(postMoviewReviews)
 
+    const updateMovieReviews = new lambdanode.NodejsFunction(
+      this,
+      "UpdateMovieReview",
+      {
+        architecture: lambda.Architecture.ARM_64,
+        runtime: lambda.Runtime.NODEJS_22_X,
+        entry: `${__dirname}/../lambdas/updateMovieReview.ts`,
+        timeout: cdk.Duration.seconds(10),
+        memorySize: 128,
+        environment: {
+          TABLE_NAME: moviereviewstable.tableName,
+          REGION: 'eu-west-1',
+        },
+      }
+    )
+    const updateMovieReviewURL = updateMovieReviews.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE ,
+      cors:{
+        allowedOrigins:["*"]
+      }
+    })
+    moviereviewstable.grantReadWriteData(updateMovieReviews);
+
+    const deleteMovieReviews = new lambdanode.NodejsFunction(
+      this,
+      "DeleteMovieReview",
+      {
+        architecture: lambda.Architecture.ARM_64,
+        runtime: lambda.Runtime.NODEJS_22_X,
+        entry: `${__dirname}/../lambdas/deleteMovieReview.ts`,
+        timeout: cdk.Duration.seconds(10),
+        memorySize: 128,
+        environment: {
+          TABLE_NAME: moviereviewstable.tableName,
+          REGION: 'eu-west-1',
+        },
+      }
+    )
+    const deleteMovieReviewURL = deleteMovieReviews.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE ,
+      cors:{
+        allowedOrigins:["*"]
+      }
+    })
+    moviereviewstable.grantReadWriteData(deleteMovieReviews)
     const movieReviewsEndPoint = api.root.addResource("reviews");
     movieReviewsEndPoint.addMethod(
       "GET",
@@ -169,6 +214,16 @@ export class MovieReviewsBackendStack extends cdk.Stack {
       "POST",
       new apig.LambdaIntegration(postMoviewReviews, {proxy:true})
     )
+    movieReviewsByReviewIdEndPoint.addMethod(
+      "PATCH",
+      new apig.LambdaIntegration(updateMovieReviews, {proxy:true})
+    )
+    movieReviewsByReviewIdEndPoint.addMethod(
+      "DELETE",
+      new apig.LambdaIntegration(deleteMovieReviews, {proxy:true})
+    )
+    new cdk.CfnOutput(this, "Delete Movie Reviews Url", {value: deleteMovieReviewURL.url,});
+    new cdk.CfnOutput(this, "Update Movie Reviews Url", {value: updateMovieReviewURL.url,});
     new cdk.CfnOutput(this, "Post Movie Reviews Url", {value: postMoviewReviewsURL.url,});
     new cdk.CfnOutput(this, "Get Movie Reviews by Ids Url", {value: getMoviewReviewsByIdURL.url,});
     new cdk.CfnOutput(this, "Get All Movie Reviews Url", {value: getAllMovieReviewsURL.url,});
