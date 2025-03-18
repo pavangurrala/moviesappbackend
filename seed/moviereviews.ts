@@ -8,7 +8,8 @@ export const movieReviews : MovieReviews[] = [
         reviewId: 1,
         reviewerId: 'johnh@gmail.com',
         reviewDate: '2025-03-12',
-        Content: 'It is a good movie, but needs more work the graphics part'
+        Content: 'It is a good movie, but needs more work the graphics part',
+        translatedReview: {},
     },
     {
         movieId : 2,
@@ -17,7 +18,8 @@ export const movieReviews : MovieReviews[] = [
         reviewId: 2,
         reviewerId: 'smiths@gmail.com',
         reviewDate: '2025-01-12',
-        Content: 'Very good movie, vfx are on spot, enjoyed with my family'
+        Content: 'Very good movie, vfx are on spot, enjoyed with my family',
+        translatedReview: {},
     },
     {
         movieId : 3,
@@ -26,6 +28,7 @@ export const movieReviews : MovieReviews[] = [
         reviewId: 3,
         reviewerId: 'carol@gmail.com',
         reviewDate: '2025-01-12',
-        Content: 'Very inspiring movie, felt goosebumps through out the movie'
+        Content: 'Very inspiring movie, felt goosebumps through out the movie',
+        translatedReview: {}
     },
 ]

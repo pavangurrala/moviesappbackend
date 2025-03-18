@@ -7,6 +7,7 @@ import { generateBatch } from '../shared/util';
 import { movieReviews } from '../seed/moviereviews';
 import { Construct } from 'constructs';
 import * as apig from "aws-cdk-lib/aws-apigateway"
+import * as iam from "aws-cdk-lib/aws-iam";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class MovieReviewsBackendStack extends cdk.Stack {
@@ -190,6 +191,35 @@ export class MovieReviewsBackendStack extends cdk.Stack {
       }
     })
     moviereviewstable.grantReadWriteData(deleteMovieReviews)
+
+    const translatedMovieReview = new lambdanode.NodejsFunction(
+      this,
+      "TranslateMovieReview",
+      {
+        architecture: lambda.Architecture.ARM_64,
+        runtime: lambda.Runtime.NODEJS_22_X,
+        entry: `${__dirname}/../lambdas/translateMovieReview.ts`,
+        timeout: cdk.Duration.seconds(10),
+        memorySize: 128,
+        environment: {
+          TABLE_NAME: moviereviewstable.tableName,
+          REGION: 'eu-west-1',
+        },
+      }
+    )
+    const translateMovieReviewURL = translatedMovieReview.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE ,
+      cors:{
+        allowedOrigins:["*"]
+      }
+    });
+    moviereviewstable.grantReadWriteData(translatedMovieReview)
+    translatedMovieReview.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions:["translate:TranslateText"],
+        resources:["*"]
+      })
+    )
     const movieReviewsEndPoint = api.root.addResource("reviews");
     movieReviewsEndPoint.addMethod(
       "GET",
@@ -222,6 +252,12 @@ export class MovieReviewsBackendStack extends cdk.Stack {
       "DELETE",
       new apig.LambdaIntegration(deleteMovieReviews, {proxy:true})
     )
+    const translateMovieReviewsByTranslateIdEndPoint = movieReviewsByReviewIdEndPoint.addResource("{translateLanguageCode}");
+    translateMovieReviewsByTranslateIdEndPoint.addMethod(
+      "PATCH",
+      new apig.LambdaIntegration(translatedMovieReview, {proxy:true})
+    )
+    new cdk.CfnOutput(this, "Translate Movie Reviews Url", {value: translateMovieReviewURL.url,});
     new cdk.CfnOutput(this, "Delete Movie Reviews Url", {value: deleteMovieReviewURL.url,});
     new cdk.CfnOutput(this, "Update Movie Reviews Url", {value: updateMovieReviewURL.url,});
     new cdk.CfnOutput(this, "Post Movie Reviews Url", {value: postMoviewReviewsURL.url,});
