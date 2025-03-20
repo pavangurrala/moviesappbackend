@@ -18,3 +18,4 @@ new MovieReviewsBackendStack(app, 'MovieReviewsBackendStack', {
 
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
 });
+

@@ -9,11 +9,70 @@ import { Construct } from 'constructs';
 import * as apig from "aws-cdk-lib/aws-apigateway"
 import * as iam from "aws-cdk-lib/aws-iam";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as cognito from "aws-cdk-lib/aws-cognito";
+import { UserPool } from "aws-cdk-lib/aws-cognito";
 
 export class MovieReviewsBackendStack extends cdk.Stack {
+    private auth: apig.IResource;
+    private userPoolId: string;
+    private userPoolClientId: string;
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const userPool = new UserPool(this, "UserPool", {
+                signInAliases: { username: true, email: true },
+                selfSignUpEnabled: true,
+                removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    this.userPoolId = userPool.userPoolId;
+        const appClient = userPool.addClient("AppClient", {
+            authFlows: { userPassword: true },
+    });
+    this.userPoolClientId = appClient.userPoolClientId;
+    const authApi = new apig.RestApi(this, "AuthServiceApi", {
+                description: "Authentication Service RestApi",
+                endpointTypes: [apig.EndpointType.REGIONAL],
+                defaultCorsPreflightOptions: {
+                  allowOrigins: apig.Cors.ALL_ORIGINS,
+                },
+    });
+    const appCommonFnProps = {
+        architecture: lambda.Architecture.ARM_64,
+        timeout: cdk.Duration.seconds(10),
+        memorySize: 128,
+        runtime: lambda.Runtime.NODEJS_22_X,
+        handler: "handler",
+        environment: {
+          USER_POOL_ID: this.userPoolId,
+          CLIENT_ID: this.userPoolClientId,
+          REGION: cdk.Aws.REGION,
+          },
+    };
+    this.auth = authApi.root.addResource("auth");
+    this.addAuthRoute(
+      "signup",
+      "POST",
+      "SignupFn",
+      "signup.ts")
+    this.addAuthRoute(
+        "confirm_signup",
+        "POST",
+        "ConfirmFn",
+        "confirm-signup.ts"
+      )
+  this.addAuthRoute('signout', 'GET', 'SignoutFn', 'signout.ts');
+  this.addAuthRoute('signin', 'POST', 'SigninFn', 'signin.ts'); 
+  const authorizerFn = new lambdanode.NodejsFunction(this, "AuthorizerFn", {
+      ...appCommonFnProps,
+      entry: `${__dirname}/../lambdas/auth/authorizer.ts`,
+  });
+  const requestAuthorizer = new apig.RequestAuthorizer(this,"RequestAuthorizer",{
+      identitySources: [apig.IdentitySource.header("cookie")],
+      handler:authorizerFn,
+      resultsCacheTtl: cdk.Duration.minutes(0)
+  });
+
+   
     const simpleFn = new lambdanode.NodejsFunction(this, "SimpleFn", {
       architecture: lambda.Architecture.ARM_64,
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -22,6 +81,8 @@ export class MovieReviewsBackendStack extends cdk.Stack {
       memorySize: 128,
     });
 
+    
+    
     const api = new apig.RestApi(this, "RestApi", {
       description : "getMoviewReviews api",
       deployOptions:{
@@ -34,8 +95,6 @@ export class MovieReviewsBackendStack extends cdk.Stack {
         allowOrigins: ["*"],
       }
     });
-
-    
     
     const simpleFnURL = simpleFn.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
@@ -242,11 +301,17 @@ export class MovieReviewsBackendStack extends cdk.Stack {
     )
     movieReviewsEndPoint.addMethod(
       "POST",
-      new apig.LambdaIntegration(postMoviewReviews, {proxy:true})
+      new apig.LambdaIntegration(postMoviewReviews, {proxy:true}),{
+        authorizer:requestAuthorizer,
+        authorizationType:apig.AuthorizationType.CUSTOM
+      }
     )
     movieReviewsByReviewIdEndPoint.addMethod(
       "PATCH",
-      new apig.LambdaIntegration(updateMovieReviews, {proxy:true})
+      new apig.LambdaIntegration(updateMovieReviews, {proxy:true}),{
+        authorizer:requestAuthorizer,
+        authorizationType:apig.AuthorizationType.CUSTOM
+      }
     )
     movieReviewsByReviewIdEndPoint.addMethod(
       "DELETE",
@@ -257,6 +322,8 @@ export class MovieReviewsBackendStack extends cdk.Stack {
       "PATCH",
       new apig.LambdaIntegration(translatedMovieReview, {proxy:true})
     )
+    new cdk.CfnOutput(this, "CognitoUserPoolId", { value: userPool.userPoolId });
+    
     new cdk.CfnOutput(this, "Translate Movie Reviews Url", {value: translateMovieReviewURL.url,});
     new cdk.CfnOutput(this, "Delete Movie Reviews Url", {value: deleteMovieReviewURL.url,});
     new cdk.CfnOutput(this, "Update Movie Reviews Url", {value: updateMovieReviewURL.url,});
@@ -265,4 +332,31 @@ export class MovieReviewsBackendStack extends cdk.Stack {
     new cdk.CfnOutput(this, "Get All Movie Reviews Url", {value: getAllMovieReviewsURL.url,});
     new cdk.CfnOutput(this, "Simple Function Url", {value: simpleFnURL.url});
   }
+
+  private addAuthRoute(
+          resourceName: string,
+          method:string,
+          fnName:string,
+          fnEntry:string,
+          allowCognitoAcccess?:boolean
+        ):void{
+          const commonFnProps = {
+            architecture: lambda.Architecture.ARM_64,
+            timeout: cdk.Duration.seconds(10),
+            memorySize: 128,
+            runtime: lambda.Runtime.NODEJS_22_X,
+            handler: "handler",
+            environment: {
+              USER_POOL_ID: this.userPoolId,
+              CLIENT_ID: this.userPoolClientId,
+              REGION: cdk.Aws.REGION
+            },
+          }
+          const resource = this.auth.addResource(resourceName);
+          const fn = new lambdanode.NodejsFunction(this, fnName,{
+            ...commonFnProps,
+            entry: `${__dirname}/../lambdas/auth/${fnEntry}`
+          });
+          resource.addMethod(method, new apig.LambdaIntegration(fn));
+        };
 }
