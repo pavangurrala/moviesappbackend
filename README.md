@@ -13,28 +13,28 @@ This is a backend project for performing CRUD operations on movie reviews, where
 [ List of the API's endpoints (excluding the Auth API) implemented ]
 <br/>
 
-+ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews
-[GET All Reviews/Records in the MovieReview Table]<br/> 
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews <br/>
+[GET All Reviews/Records in the MovieReview Table] 
 
-+ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews/{movieId}
-[GET specific Review/Record from MovieReview Table by movieId] <br/>
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews/{movieId} <br/>
+[GET specific Review/Record from MovieReview Table by movieId] 
 
-+ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews/{movieId}?reviewId=1 
-[GET specific Review/Record from MovieReview Table by movieId and optional query string reviewId] <br/>
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews/{movieId}?reviewId=1 <br/>
+[GET specific Review/Record from MovieReview Table by movieId and optional query string reviewId] 
 
-+ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews/{movieId}?reviewerId=smiths@gmail.com
-[GET specific Review/Record from MovieReview Table by movieId and optional query string reviewerId] <br/>
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews/{movieId}?reviewerId=smiths@gmail.com <br/>
+[GET specific Review/Record from MovieReview Table by movieId and optional query string reviewerId] 
 
-+ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviewtranslations/reviews/{reviewId}/{movieId}/translation?language=fr 
-[PATCH Translate movie review of specific movie and update the tranlsatedReview column with the translated review in the movieReviewTable] <br/>
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviewtranslations/reviews/{reviewId}/{movieId}/translation?language=fr <br/>
+[PATCH Translate movie review of specific movie and update the tranlsatedReview column with the translated review in the movieReviewTable] 
 
-+ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews 
-[POST Movie Review] <br/>
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews <br/>
+[POST Movie Review] 
 
-+ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/{movieId}/reviews/{reviewId}
-[PATCH Update movie review by movieId and reviewId] <br/>
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/{movieId}/reviews/{reviewId} <br/>
+[PATCH Update movie review by movieId and reviewId] 
 
-+ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/{movieId}/reviews/{reviewId}
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/{movieId}/reviews/{reviewId} <br/>
 [DELETE Delete the movie review by movieId and reviewId] 
 
 
