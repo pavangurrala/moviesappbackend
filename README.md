@@ -2,7 +2,7 @@
 
 __Name:__ Pavan Gurrala
 
-__Demo:__ [... link to your YouTube video demonstration ......](https://youtu.be/ncXPUKkf1Uw)
+__Demo:__ https://youtu.be/ncXPUKkf1Uw
 
 ### Overview.
 
@@ -10,23 +10,32 @@ This is a backend project for performing CRUD operations on movie reviews, where
 
 ### App API endpoints.
 
-[ Provide a bullet-point list of the API's endpoints (excluding the Auth API) you have successfully implemented - see the assignment specification as a guide.]<br/>
-[GET All Reviews/Records in the MovieReview Table]<br/>
-+ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews <br/>
+[ List of the API's endpoints (excluding the Auth API) implemented ]
+<br/>
+
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews
+[GET All Reviews/Records in the MovieReview Table]<br/> 
+
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews/{movieId}
 [GET specific Review/Record from MovieReview Table by movieId] <br/>
-+ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews/{movieId} <br/>
+
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews/{movieId}?reviewId=1 
 [GET specific Review/Record from MovieReview Table by movieId and optional query string reviewId] <br/>
-+ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews/{movieId}?reviewId=1 <br/>
+
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews/{movieId}?reviewerId=smiths@gmail.com
 [GET specific Review/Record from MovieReview Table by movieId and optional query string reviewerId] <br/>
-+ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews/{movieId}?reviewerId=smiths@gmail.com <br/>
+
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviewtranslations/reviews/{reviewId}/{movieId}/translation?language=fr 
 [PATCH Translate movie review of specific movie and update the tranlsatedReview column with the translated review in the movieReviewTable] <br/>
-+ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviewtranslations/reviews/{reviewId}/{movieId}/translation?language=fr <br/>
+
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews 
 [POST Movie Review] <br/>
-+ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews <br/>
-[PATCH Update movie review by movieId and reviewId] <br/>
-+ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/{movieId}/reviews/{reviewId} <br/>
-[DELETE Delete the movie review by movieId and reviewId] 
+
 + https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/{movieId}/reviews/{reviewId}
+[PATCH Update movie review by movieId and reviewId] <br/>
+
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/{movieId}/reviews/{reviewId}
+[DELETE Delete the movie review by movieId and reviewId] 
 
 
 
