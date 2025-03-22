@@ -11,12 +11,24 @@ This is a backend project for performing CRUD operations on movie reviews, where
 ### App API endpoints.
 
 [ Provide a bullet-point list of the API's endpoints (excluding the Auth API) you have successfully implemented - see the assignment specification as a guide.]
-[Get All Reviews/Records in the MovieReview Table]
+
 + https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews 
-[Get Movie Reviews By movieId]
-+ GET /movies/reviews/[movieId] - Get all the reviews for the specified movie. It will also support an optional query string that specifies a review ID or reviewer identity (email address), e.g. ?revieId=1234 or ?reviewerName=joe@gmail.com.
-+ POST /movies/reviews - add a movie review. Only authenticated users can post a review.
-+ etc,
+[GET All Reviews/Records in the MovieReview Table]
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews/{movieId} 
+[GET specific Review/Record from MovieReview Table by movieId]
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews/{movieId}?reviewId=1
+[GET specific Review/Record from MovieReview Table by movieId and optional query string reviewId]
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews/{movieId}?reviewerId=smiths@gmail.com
+[GET specific Review/Record from MovieReview Table by movieId and optional query string reviewerId]
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviewtranslations/reviews/{reviewId}/{movieId}/translation?language=fr
+[PATCH Translate movie review of specific movie and update the tranlsatedReview column with the translated review in the movieReviewTable]
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/reviews 
+[POST Movie Review]
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/{movieId}/reviews/{reviewId}
+[PATCH Update movie review by movieId and reviewId]
++ https://2eo4rovcm9.execute-api.eu-west-1.amazonaws.com/movies/{movieId}/reviews/{reviewId}
+[DELETE Delete the movie review by movieId and reviewId]
+
 
 ### Features.
 
