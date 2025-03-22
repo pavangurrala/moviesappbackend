@@ -43,7 +43,7 @@ This is a backend project for performing CRUD operations on movie reviews, where
 + Content - String (the review text). Updatable.
 + Translations - ?
 ]
-
+![alt text](image.png)
 #### Custom L2 Construct (if completed)
 
 [State briefly the infrastructure provisioned by your custom L2 construct. Show the structure of its input props object and list the public properties it exposes, e.g. taken from the Cognito lab,
