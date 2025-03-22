@@ -1,10 +1,10 @@
-import { APIGatewayProxyHandlerV2 } from "aws-lambda";
+import { APIGatewayProxyHandlerV2 , APIGatewayProxyEventV2} from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, DeleteCommand,GetCommand } from "@aws-sdk/lib-dynamodb";
 
 const ddbDocClient = createDocumentClient();
 
-export const handler: APIGatewayProxyHandlerV2 = async(event, context) =>{
+export const handler: APIGatewayProxyHandlerV2 = async(event: APIGatewayProxyEventV2 & { requestContext: { authorizer?: { emailId?: string } } }, context) =>{
     try{
         console.log("Event: ", JSON.stringify(event));
         const queryParams = event?.pathParameters;
@@ -27,6 +27,32 @@ export const handler: APIGatewayProxyHandlerV2 = async(event, context) =>{
                 },
                 body: JSON.stringify({ message: "Missing review Id or movie Id parameter" }),
             }
+        }
+        const signedInUserEmailId = event.requestContext?.authorizer?.emailId;
+        if (!signedInUserEmailId) {
+                return {
+                        statusCode: 403,
+                        headers: { "content-type": "application/json" },
+                        body: JSON.stringify({ message:"missing email id" }),
+                };
+        }
+        const getExistingReviewCommand = new GetCommand({
+                    TableName: process.env.TABLE_NAME,
+                    Key: { movieId, reviewId },
+        });
+        const existingReview = await ddbDocClient.send(getExistingReviewCommand);
+
+        if (!existingReview.Item) {
+            return {
+                statusCode: 404,
+                body: JSON.stringify({ message: "No review found." }),
+            };
+        }
+        if (existingReview.Item.reviewerId !== signedInUserEmailId) {
+            return {
+                statusCode: 403,
+                body: JSON.stringify({ message: "You are not an authorized user to delete this review." }),
+            };
         }
         const deleteCommand = new DeleteCommand({
             TableName: process.env.TABLE_NAME,

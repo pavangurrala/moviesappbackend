@@ -72,18 +72,7 @@ export class MovieReviewsBackendStack extends cdk.Stack {
       resultsCacheTtl: cdk.Duration.minutes(0)
   });
 
-   
-    const simpleFn = new lambdanode.NodejsFunction(this, "SimpleFn", {
-      architecture: lambda.Architecture.ARM_64,
-      runtime: lambda.Runtime.NODEJS_22_X,
-      entry: `${__dirname}/../lambdas/simple.ts`,
-      timeout: cdk.Duration.seconds(10),
-      memorySize: 128,
-    });
-
-    
-    
-    const api = new apig.RestApi(this, "RestApi", {
+  const api = new apig.RestApi(this, "RestApi", {
       description : "getMoviewReviews api",
       deployOptions:{
         stageName:"movies",
@@ -94,14 +83,9 @@ export class MovieReviewsBackendStack extends cdk.Stack {
         allowCredentials: true,
         allowOrigins: ["*"],
       }
-    });
+  });
     
-    const simpleFnURL = simpleFn.addFunctionUrl({
-      authType: lambda.FunctionUrlAuthType.NONE,
-      cors:{
-        allowedOrigins:["*"]
-      }
-    });
+    
     //to create movie reviews table in dynamo database
     const moviereviewstable = new dynamodb.Table(this, "MovieReviewsTable", {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -289,16 +273,9 @@ export class MovieReviewsBackendStack extends cdk.Stack {
       "GET",
       new apig.LambdaIntegration(getMovieReviewsId, {proxy:true})
     )
-    const movieReviewsByReviewIdEndPoint = movieReviewsByIdEndPoint.addResource("{reviewId}");
-    movieReviewsByReviewIdEndPoint.addMethod(
-      "GET",
-      new apig.LambdaIntegration(getMovieReviewsId, {proxy:true})
-    )
-    const movieReviewsByReviewerIdEndPoint = movieReviewsByIdEndPoint.addResource("reviewer").addResource("{reviewerId}");
-    movieReviewsByReviewerIdEndPoint.addMethod(
-      "GET",
-      new apig.LambdaIntegration(getMovieReviewsId, {proxy:true})
-    )
+    const updateMovieIdReviewEndPoint = api.root.addResource("{movieId}")
+    const updateMovieReviewsEndPoint = updateMovieIdReviewEndPoint.addResource("reviews")
+    const movieReviewsByReviewIdEndPoint = updateMovieReviewsEndPoint.addResource("{reviewId}");
     movieReviewsEndPoint.addMethod(
       "POST",
       new apig.LambdaIntegration(postMoviewReviews, {proxy:true}),{
@@ -315,22 +292,28 @@ export class MovieReviewsBackendStack extends cdk.Stack {
     )
     movieReviewsByReviewIdEndPoint.addMethod(
       "DELETE",
-      new apig.LambdaIntegration(deleteMovieReviews, {proxy:true})
+      new apig.LambdaIntegration(deleteMovieReviews, {proxy:true}),{
+        authorizer:requestAuthorizer,
+        authorizationType:apig.AuthorizationType.CUSTOM
+      }
     )
-    const translateMovieReviewsByTranslateIdEndPoint = movieReviewsByReviewIdEndPoint.addResource("{translateLanguageCode}");
+    
+    const translationEndpoint =  api.root.addResource("reviewtranslations")
+    const translationReviewsEndpoint = translationEndpoint.addResource("reviews")
+    const translationReviewIDEndpoint = translationReviewsEndpoint.addResource("{reviewId}")
+    const translationMovieIDEndpoint = translationReviewIDEndpoint.addResource("{movieId}")
+    const translateMovieReviewsByTranslateIdEndPoint = translationMovieIDEndpoint.addResource("translation");
     translateMovieReviewsByTranslateIdEndPoint.addMethod(
       "PATCH",
       new apig.LambdaIntegration(translatedMovieReview, {proxy:true})
     )
     new cdk.CfnOutput(this, "CognitoUserPoolId", { value: userPool.userPoolId });
-    
     new cdk.CfnOutput(this, "Translate Movie Reviews Url", {value: translateMovieReviewURL.url,});
     new cdk.CfnOutput(this, "Delete Movie Reviews Url", {value: deleteMovieReviewURL.url,});
     new cdk.CfnOutput(this, "Update Movie Reviews Url", {value: updateMovieReviewURL.url,});
     new cdk.CfnOutput(this, "Post Movie Reviews Url", {value: postMoviewReviewsURL.url,});
     new cdk.CfnOutput(this, "Get Movie Reviews by Ids Url", {value: getMoviewReviewsByIdURL.url,});
     new cdk.CfnOutput(this, "Get All Movie Reviews Url", {value: getAllMovieReviewsURL.url,});
-    new cdk.CfnOutput(this, "Simple Function Url", {value: simpleFnURL.url});
   }
 
   private addAuthRoute(

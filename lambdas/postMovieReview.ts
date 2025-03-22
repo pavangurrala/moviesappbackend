@@ -1,15 +1,13 @@
-import { APIGatewayProxyHandlerV2 } from "aws-lambda";
+import { APIGatewayProxyHandlerV2,APIGatewayProxyEventV2 } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
-
 const ddbDocClient = createDDbDocClient();
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
-export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
+export const handler: APIGatewayProxyHandlerV2 = async (event: APIGatewayProxyEventV2 & { requestContext: { authorizer?: { emailId?: string } } }, context) => {
     try{
         console.log("[EVENT]", JSON.stringify(event));
         const body = event.body ? JSON.parse(event.body) : undefined;
-
         if(!body){
             return{
                 statusCode: 500,
@@ -19,7 +17,14 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
             body: JSON.stringify({ message: "Missing request body" }),
             }
         }
-
+        const emailId = event.requestContext?.authorizer?.emailId;
+        if (!emailId) {
+            return {
+                statusCode: 403,
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ message: "Unauthorized: Missing emailId" }),
+            };
+        }
         const latestreviewId = new ScanCommand({
             TableName: process.env.TABLE_NAME,
             ProjectionExpression: "reviewId"
@@ -38,8 +43,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
                     movieTitle: body.movieTitle, 
                     original_language: body.original_language,
                     reviewId : newReviewId,
-                    reviewerId: body.reviewerId,
-                    reviewDate: body.reviewDate,
+                    reviewerId: emailId,
+                    reviewDate: new Date().toISOString().split("T")[0],
                     Content: body.Content
                 }
             })

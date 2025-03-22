@@ -12,7 +12,7 @@ export const handler: APIGatewayProxyHandlerV2 = async(event:any) =>{
         const queryParams = event?.pathParameters;
         const movieId = queryParams?.movieId ? parseInt(queryParams.movieId) : undefined;
         const reviewId = queryParams?.reviewId ? parseInt(queryParams.reviewId) : undefined;
-        const translateLanguageCode = queryParams?.translateLanguageCode
+        const translateLanguageCode = event.queryStringParameters?.language;
         if(!movieId || !reviewId ){
             return{
                 statusCode: 400,

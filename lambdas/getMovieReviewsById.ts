@@ -12,78 +12,46 @@ const ddbDocClient = createDocumentClient();
 export const handler: APIGatewayProxyHandlerV2  = async(event, context) =>{
     try{
         console.log("Event: ", JSON.stringify(event));
-        const queryParams = event?.pathParameters;
-        const reviewId = queryParams?.reviewId ? parseInt(queryParams.reviewId) : undefined;
-        if(!queryParams){
+        //const queryParams = event?.pathParameters;
+        //const reviewId = queryParams?.reviewId ? parseInt(queryParams.reviewId) : undefined;
+        const movieId = event.pathParameters?.movieId;
+        const reviewId = event.queryStringParameters?.reviewId; // Extract reviewId from query string (if provided)
+        const reviewerId = event.queryStringParameters?.reviewerId;
+        if(!movieId){
             return {
                 statusCode: 500,
                 headers: {
-                  "content-type": "application/json",
-         },
-         body: JSON.stringify({ message: "Missing query parameters" }),
-        }
-    }
-    if(!queryParams.movieId){
-        return {
-            statusCode: 500,
-            headers: {
-              "content-type": "application/json",
-     },
-     body: JSON.stringify({ message: "Missing movie Id parameter" }),
-        }
-    }
-    
-    const movieId = parseInt(queryParams?.movieId)
-    let commandInput: QueryCommandInput = {
-        TableName: process.env.TABLE_NAME,
-    };
-    if("reviewId" in queryParams){
-        if (!reviewId) {
-            return {
-                statusCode: 400,
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({ message: "Invalid reviewId parameter. Must be a number." }),
-            };
-        }
-        commandInput = {
-            ...commandInput,
-            KeyConditionExpression:"movieId =:m and reviewId= :r",
-            ExpressionAttributeValues :{
-                ":m":movieId,
-                ":r":reviewId,
-            } 
-        }
-    }else if("reviewerId" in queryParams){
-        commandInput = {
-            ...commandInput,
-            IndexName: "reviewerId",
-            KeyConditionExpression:"movieId =:m and begins_with(reviewerId, :r)",
-            ExpressionAttributeValues :{
-                ":m":movieId,
-                ":r": queryParams.reviewerId,
-            } 
-        }
-    }else{
-        commandInput = {
-            ...commandInput,
-            KeyConditionExpression:"movieId =:m",
-            ExpressionAttributeValues :{
-                ":m":movieId,
-            } 
-        }
-    }
-    const commandOutput = await ddbDocClient.send(
-        new QueryCommand(commandInput)
-    );
-    return{
-        statusCode: 200,
-        headers: {
-            "content-type": "application/json",
+                "content-type": "application/json",
         },
-        body: JSON.stringify({
-            data: commandOutput.Items,
-        }),
-    }
+        body: JSON.stringify({ message: "Missing movie Id parameter" }),
+            }
+        }
+        let commandInput: QueryCommandInput = {
+            TableName: process.env.TABLE_NAME,
+            KeyConditionExpression: "movieId = :movieId",
+            ExpressionAttributeValues: { ":movieId": Number(movieId) },
+        };
+        if (reviewId) {
+            commandInput.KeyConditionExpression += " AND reviewId = :reviewId";
+            commandInput.ExpressionAttributeValues![":reviewId"] = Number(reviewId);
+          } else if (reviewerId) {
+            commandInput.FilterExpression = "reviewerId = :reviewerId";
+            commandInput.ExpressionAttributeValues![":reviewerId"] = reviewerId; 
+          }
+        
+        
+        const commandOutput = await ddbDocClient.send(
+            new QueryCommand(commandInput)
+        );
+        return{
+            statusCode: 200,
+            headers: {
+                "content-type": "application/json",
+            },
+            body: JSON.stringify({
+                data: commandOutput.Items,
+            }),
+        }
     }
     catch(error:any){
         console.log(JSON.stringify(error));
